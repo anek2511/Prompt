@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- แก้ไขชื่อโปรแกรมจุดที่ 1: แท็ก <title> สำหรับแสดงบนแท็บเบราว์เซอร์ -->
+    <title>AetherLens AI Studio — โปรแกรมช่วยเขียน Prompt สร้างภาพ AI</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Prompt (Thai) & Inter (English) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Prompt', 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a 50%, #090d16 100%);
+            min-height: 100vh;
+            color: #f1f5f9;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.72);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-input {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            transition: all 0.2s ease;
+        }
+        .glass-input:focus {
+            border-color: #818cf8;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+            outline: none;
+        }
+        .magic-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+        }
+        .magic-gradient:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #9333ea 50%, #db2777 100%);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-indigo-500 selection:text-white pb-16">
+
+    <!-- ================= HEADER NAVBAR ================= -->
+    <header class="sticky top-0 z-40 glass-card border-b border-slate-800/80 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            <!-- Brand Logo & Name -->
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl magic-gradient flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-wand-magic-sparkles text-white text-xl"></i>
+                </div>
+                <div>
+                    <!-- แก้ไขชื่อโปรแกรมจุดที่ 2: โลโก้ส่วนหัวเว็บ (Header Brand Title) -->
+                    <div class="flex items-center gap-2">
+                        <h1 id="appTitle" class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-white via-indigo-200 to-purple-300 bg-clip-text text-transparent tracking-tight">
+                            AetherLens AI Studio
+                        </h1>
+                        <span class="hidden sm:inline-block text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                            Pro v2.5
+                        </span>
+                    </div>
+                    <p id="appSubtitle" class="text-xs sm:text-sm text-slate-400">
+                        เครื่องมือช่วยเขียน Prompt สร้างภาพ AI อัจฉริยะ (ChatGPT & Google Flow)
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Controls: Language Switch & Reset -->
+            <div class="flex items-center gap-2.5 sm:gap-3">
+                <!-- Language Switch Button (TH / EN) -->
+                <button id="langToggleBtn" onclick="toggleLanguage()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-600/60 text-sm font-medium text-slate-100 transition shadow-sm" title="Switch Language / เปลี่ยนภาษา">
+                    <i class="fa-solid fa-earth-asia text-indigo-400"></i>
+                    <span id="langBadgeText">ภาษาไทย (TH)</span>
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 font-semibold" id="langSwitchHint">⇄ EN</span>
+                </button>
+
+                <!-- Clear All Button -->
+                <button onclick="resetForm()" class="p-2.5 sm:px-3.5 sm:py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-sm font-medium transition flex items-center gap-1.5" title="Reset All">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span id="btnResetText" class="hidden md:inline">ล้างค่า</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= MAIN CONTENT ================= -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+
+            <!-- LEFT COLUMN: INPUTS & DROPDOWNS (7 Cols) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- 1. MAIN SUBJECT CARD -->
+                <section class="glass-card rounded-2xl p-5 sm:p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-3">
+                        <label for="subjectInput" class="flex items-center gap-2 text-base sm:text-lg font-semibold text-white">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center text-sm font-bold">1</span>
+                            <span id="lblSubjectTitle">ชื่อภาพหรือแนวคิดหลักที่ต้องการ (Main Subject)</span>
+                        </label>
+                        <span id="lblLangSupport" class="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full flex items-center gap-1">
+                            <i class="fa-solid fa-check-circle"></i> รองรับ ไทย & EN
+                        </span>
+                    </div>
+
+                    <textarea
+                        id="subjectInput"
+                        rows="3"
+                        oninput="buildPrompts()"
+                        placeholder="พิมพ์สิ่งที่ต้องการให้แสดงในภาพ เช่น แมวส้มสวมชุดนักบินอวกาศยืนอยู่บนดาวอังคาร หรือ A cozy minimalist cafe in Tokyo..."
+                        class="w-full rounded-xl p-3.5 text-slate-100 placeholder-slate-400 text-sm sm:text-base glass-input resize-y"
+                    ></textarea>
+
+                    <!-- Quick Starter Idea Chips -->
+                    <div class="mt-3">
+                        <div class="text-xs text-slate-400 mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                            <span id="lblQuickIdeas">ไอเดียตั้งต้นด่วน (คลิกเพื่อเลือก):</span>
+                        </div>
+                        <div id="quickChipsContainer" class="flex flex-wrap gap-1.5">
+                            <!-- Populated by JS based on current language -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. DROPDOWN PARAMETERS (8 Essential Categories) -->
+                <section class="glass-card rounded-2xl p-5 sm:p-6 shadow-xl">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
+                        <h2 class="flex items-center gap-2 text-base sm:text-lg font-semibold text-white">
+                            <span class="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-300 flex items-center justify-center text-sm font-bold">2</span>
+                            <span id="lblDropdownSectionTitle">ตั้งค่าองค์ประกอบภาพ (Visual & Camera Settings)</span>
+                        </h2>
+
+                        <!-- Generate Auto / Magic Enhance Button -->
+                        <button
+                            type="button"
+                            onclick="generateAutoMagic()"
+                            class="magic-gradient text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-lg shadow-purple-500/30 flex items-center gap-2 transition transform active:scale-95 hover:brightness-110"
+                        >
+                            <i class="fa-solid fa-wand-sparkles animate-pulse"></i>
+                            <span id="btnMagicAutoText">Generate Auto (สุ่มและขยายรายละเอียด)</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Dropdown 1: Target AI Platform -->
+                        <div>
+                            <label for="ddPlatform" class="block text-xs sm:text-sm font-medium text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-robot text-indigo-400 mr-1.5"></i>
+                                <span id="lblPlatform">แพลตฟอร์ม AI (Target AI)</span>
+                            </label>
+                            <select id="ddPlatform" onchange="buildPrompts()" class="w-full rounded-xl px-3.5 py-2.5 text-sm text-slate-100 glass-input"></select>
+                        </div>
+
+                        <!-- Dropdown 2: Art Style -->
+                        <div>
+                            <label for="ddStyle" class="block text-xs sm:text-sm font-medium text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-palette text-pink-400 mr-1.5"></i>
+                                <span id="lblStyle">สไตล์ภาพ (Art Style)</span>
+                            </label>
+                            <select id="ddStyle" onchange="buildPrompts()" class="w-full rounded-xl px-3.5 py-2.5 text-sm text-slate-100 glass-input"></select>
+                        </div>
+
+                        <!-- Dropdown 3: Camera Angle -->
+                        <div>
+                            <label for="ddCamera" class="block text-xs sm:text-sm font-medium text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-camera text-cyan-400 mr-1.5"></i>
+                                <span id="lblCamera">มุมกล้องและระยะภาพ (Camera Angle)</span>
+                            </label>
+                            <select id="ddCamera" onchange="buildPrompts()" class="w-full rounded-xl px-3.5 py-2.5 text-sm text-slate-100 glass-input"></select>
+                        </div>
+
+                        <!-- Dropdown 4: Lighting -->
+                        <div>
+                            <label for="ddLighting" class="block text-xs sm:text-sm font-medium text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-sun text-amber-400 mr-1.5"></i>
+                                <span id="lblLighting">การจัดแสง (Lighting)</span>
+                            </label>
+                            <select id="ddLighting" onchange="buildPrompts()" class="w-full rounded-xl px-3.5 py-2.5 text-sm text-slate-100 glass-input"></select>
+                        </div>
+
+                        <!-- Dropdown 5: Color Tone -->
+                        <div>
+                            <label for="ddColor" class="block text-xs sm:text-sm font-medium text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-swatchbook text-emerald-400 mr-1.5"></i>
+                                <span id="lblColor">โทนสีและอารมณ์ (Color & Mood)</span>
+                            </label>
+                            <select id="ddColor" onchange="buildPrompts()" class="w-full rounded-xl px-3.5 py-2.5 text-sm text-slate-100 glass-input"></select>
+                        </div>
+
+                        <!-- Dropdown 6: Composition & Lens -->
+                        <div>
+                            <label for="ddComposition" class="block text-xs sm:text-sm font-medium text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-crop-simple text-purple-400 mr-1.5"></i>
+                                <span id="lblComposition">องค์ประกอบและเลนส์ (Composition & Lens)</span>
+                            </label>
+                            <select id="ddComposition" onchange="buildPrompts()" class="w-full rounded-xl px-3.5 py-2.5 text-sm text-slate-100 glass-input"></select>
+                        </div>
+
+                        <!-- Dropdown 7: Quality & Render Engine -->
+                        <div>
+                            <label for="ddQuality" class="block text-xs sm:text-sm font-medium text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-gem text-sky-400 mr-1.5"></i>
+                                <span id="lblQuality">คุณภาพและเอนจิน (Quality & Engine)</span>
+                            </label>
+                            <select id="ddQuality" onchange="buildPrompts()" class="w-full rounded-xl px-3.5 py-2.5 text-sm text-slate-100 glass-input"></select>
+                        </div>
+
+                        <!-- Dropdown 8: Aspect Ratio -->
+                        <div>
+                            <label for="ddRatio" class="block text-xs sm:text-sm font-medium text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-expand text-rose-400 mr-1.5"></i>
+                                <span id="lblRatio">อัตราส่วนภาพ (Aspect Ratio)</span>
+                            </label>
+                            <select id="ddRatio" onchange="buildPrompts()" class="w-full rounded-xl px-3.5 py-2.5 text-sm text-slate-100 glass-input"></select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. EXTRA VALUE-ADD FEATURES (Text on Image, Detail Level, Negative Prompt) -->
+                <section class="glass-card rounded-2xl p-5 sm:p-6 shadow-xl space-y-5">
+                    <h2 class="flex items-center gap-2 text-base sm:text-lg font-semibold text-white">
+                        <span class="w-7 h-7 rounded-lg bg-pink-500/20 border border-pink-500/40 text-pink-300 flex items-center justify-center text-sm font-bold">3</span>
+                        <span id="lblExtraSectionTitle">ส่วนเสริมพิเศษ (Pro Studio Controls)</span>
+                    </h2>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Custom Text inside Image -->
+                        <div>
+                            <label for="textOverlayInput" class="block text-xs sm:text-sm font-medium text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-font text-indigo-400 mr-1.5"></i>
+                                <span id="lblTextOverlay">ข้อความที่ต้องการให้ปรากฏในภาพ (ถ้ามี)</span>
+                            </label>
+                            <input
+                                id="textOverlayInput"
+                                type="text"
+                                oninput="buildPrompts()"
+                                placeholder='เช่น ป้ายไฟเขียนว่า "OPEN 24 HRS"'
+                                class="w-full rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 glass-input"
+                            >
+                        </div>
+
+                        <!-- Detail / Creativity Slider -->
+                        <div>
+                            <div class="flex justify-between text-xs sm:text-sm font-medium text-slate-300 mb-1.5">
+                                <span>
+                                    <i class="fa-solid fa-sliders text-amber-400 mr-1.5"></i>
+                                    <span id="lblDetailLevel">ระดับความละเอียด (Detail Level)</span>
+                                </span>
+                                <span id="detailLevelBadge" class="text-indigo-300 font-semibold">ระดับ 2: มาตรฐาน</span>
+                            </div>
+                            <input
+                                id="detailSlider"
+                                type="range"
+                                min="1"
+                                max="3"
+                                value="2"
+                                oninput="updateDetailBadge(); buildPrompts();"
+                                class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 mt-2"
+                            >
+                            <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+                                <span id="lblSliderMin">กระชับ (Concise)</span>
+                                <span id="lblSliderMid">สมดุล (Balanced)</span>
+                                <span id="lblSliderMax">ละเอียดสูง (Masterpiece)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Negative Prompts Checkboxes + Custom Input -->
+                    <div>
+                        <label class="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
+                            <i class="fa-solid fa-ban text-rose-400 mr-1.5"></i>
+                            <span id="lblNegativeTitle">สิ่งที่ต้องการตัดออก (Negative Prompt)</span>
+                        </label>
+                        <div id="negativeCheckboxes" class="flex flex-wrap gap-2 mb-2.5">
+                            <!-- Rendered by JS -->
+                        </div>
+                        <input
+                            id="customNegativeInput"
+                            type="text"
+                            oninput="buildPrompts()"
+                            placeholder="พิมพ์สิ่งที่ไม่ต้องการเพิ่มเติม เช่น ฝนตก, คนเยอะ, สีมืดเกินไป..."
+                            class="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-100 placeholder-slate-500 glass-input"
+                        >
+                    </div>
+                </section>
+            </div>
+
+            <!-- RIGHT COLUMN: GENERATED PROMPTS & HISTORY (5 Cols) -->
+            <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+
+                <!-- OUTPUT CARD -->
+                <section class="glass-card rounded-2xl p-5 sm:p-6 shadow-2xl border border-indigo-500/30">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+                            <h2 id="lblOutputTitle" class="text-base sm:text-lg font-bold text-white">
+                                ผลลัพธ์ Prompt พร้อมใช้งาน
+                            </h2>
+                        </div>
+
+                        <!-- Output Language Quick Switch -->
+                        <div class="inline-flex rounded-xl bg-slate-900/90 p-1 border border-slate-700/70">
+                            <button
+                                id="btnOutLangTH"
+                                onclick="setPromptLanguage('th')"
+                                class="px-3 py-1 rounded-lg text-xs font-semibold transition"
+                            >
+                                Prompt ไทย
+                            </button>
+                            <button
+                                id="btnOutLangEN"
+                                onclick="setPromptLanguage('en')"
+                                class="px-3 py-1 rounded-lg text-xs font-semibold transition"
+                            >
+                                Prompt EN
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Auto Magic Enhancer Banner Status -->
+                    <div id="magicStatusBox" class="hidden mb-4 p-3 rounded-xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 border border-purple-500/40 text-xs text-purple-200 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-sparkles text-amber-300"></i>
+                            <span id="magicStatusText">เพิ่มคำขยายรายละเอียดภาพระดับภาพยนตร์แล้ว!</span>
+                        </div>
+                        <button onclick="clearMagicEnhancement()" class="text-slate-300 hover:text-white underline text-[11px]">
+                            ยกเลิก
+                        </button>
+                    </div>
+
+                    <!-- 1. ChatGPT / DALL-E 3 Prompt Box -->
+                    <div id="chatgptCard" class="mb-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-comment-dots"></i>
+                                </span>
+                                <span id="lblChatGPTBox" class="text-xs sm:text-sm font-semibold text-emerald-300">
+                                    สำหรับ ChatGPT (DALL-E 3 / พรรณนาธรรมชาติ)
+                                </span>
+                            </div>
+                            <button
+                                onclick="copyPrompt('chatgptOutput')"
+                                class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-200 text-xs font-medium flex items-center gap-1.5 transition"
+                            >
+                                <i class="fa-regular fa-copy"></i>
+                                <span class="copy-btn-label">คัดลอก</span>
+                            </button>
+                        </div>
+                        <textarea
+                            id="chatgptOutput"
+                            rows="5"
+                            readonly
+                            class="w-full rounded-xl p-3.5 text-xs sm:text-sm text-slate-100 bg-slate-950/80 border border-slate-700/80 font-mono leading-relaxed focus:outline-none"
+                        ></textarea>
+                    </div>
+
+                    <!-- 2. Google Flow / Imagen Prompt Box -->
+                    <div id="googleFlowCard" class="mb-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-300 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-film"></i>
+                                </span>
+                                <span id="lblGoogleFlowBox" class="text-xs sm:text-sm font-semibold text-blue-300">
+                                    สำหรับ Google Flow / Imagen 3 (โครงสร้างคีย์เวิร์ดคมชัด)
+                                </span>
+                            </div>
+                            <button
+                                onclick="copyPrompt('googleFlowOutput')"
+                                class="px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/40 text-blue-200 text-xs font-medium flex items-center gap-1.5 transition"
+                            >
+                                <i class="fa-regular fa-copy"></i>
+                                <span class="copy-btn-label">คัดลอก</span>
+                            </button>
+                        </div>
+                        <textarea
+                            id="googleFlowOutput"
+                            rows="5"
+                            readonly
+                            class="w-full rounded-xl p-3.5 text-xs sm:text-sm text-slate-100 bg-slate-950/80 border border-slate-700/80 font-mono leading-relaxed focus:outline-none"
+                        ></textarea>
+                    </div>
+
+                    <!-- Action Buttons: Save to History & Export TXT -->
+                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+                        <button
+                            onclick="saveCurrentToHistory()"
+                            class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition"
+                        >
+                            <i class="fa-solid fa-bookmark"></i>
+                            <span id="btnSaveHistoryText">บันทึกเก็บไว้</span>
+                        </button>
+                        <button
+                            onclick="downloadPromptTxt()"
+                            class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600/60 text-slate-200 font-medium text-xs sm:text-sm flex items-center justify-center gap-2 transition"
+                        >
+                            <i class="fa-solid fa-file-arrow-down"></i>
+                            <span id="btnDownloadTxtText">ดาวน์โหลด .TXT</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- SAVED HISTORY CARD -->
+                <section class="glass-card rounded-2xl p-5 sm:p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+                            <span id="lblHistoryTitle">ประวัติ Prompt ที่บันทึกไว้</span>
+                        </h3>
+                        <button
+                            onclick="clearHistory()"
+                            id="btnClearHistory"
+                            class="text-xs text-slate-400 hover:text-rose-400 transition"
+                        >
+                            ล้างประวัติ
+                        </button>
+                    </div>
+                    <div id="historyList" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                        <!-- Populated via JS -->
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        // ============================================================================
+        // แก้ไขชื่อโปรแกรมจุดที่ 3: ตัวแปรภาษา (TH/EN) ใน JavaScript
+        // หากต้องการเปลี่ยนชื่อแบรนด์ ให้แก้ไขค่าของ appTitle ทั้งในส่วน th และ en ด้านล่างนี้
+        // ============================================================================
+        const i18n = {
+            th: {
+                appTitle: "AetherLens AI Studio",
+                appSubtitle: "เครื่องมือช่วยเขียน Prompt สร้างภาพ AI อัจฉริยะ (ChatGPT & Google Flow)",
+                langBadgeText: "ภาษาไทย (TH)",
+                langSwitchHint: "⇄ EN",
+                btnResetText: "ล้างค่า",
+                lblSubjectTitle: "ชื่อภาพหรือแนวคิดหลักที่ต้องการ (Main Subject)",
+                lblLangSupport: "รองรับ ไทย & EN",
+                subjectPlaceholder: "พิมพ์สิ่งที่ต้องการให้แสดงในภาพ เช่น แมวส้มสวมชุดนักบินอวกาศยืนอยู่บนดาวอังคาร หรือ A cozy minimalist cafe in Tokyo...",
+                lblQuickIdeas: "ไอเดียตั้งต้นด่วน (คลิกเพื่อเลือก):",
+                lblDropdownSectionTitle: "ตั้งค่าองค์ประกอบภาพ (Visual & Camera Settings)",
+                btnMagicAutoText: "Generate Auto (สุ่มและขยายรายละเอียด)",
+                lblPlatform: "แพลตฟอร์ม AI (Target AI)",
+                lblStyle: "สไตล์ภาพ (Art Style)",
+                lblCamera: "มุมกล้องและระยะภาพ (Camera Angle)",
+                lblLighting: "การจัดแสง (Lighting)",
+                lblColor: "โทนสีและอารมณ์ (Color & Mood)",
+                lblComposition: "องค์ประกอบและเลนส์ (Composition & Lens)",
+                lblQuality: "คุณภาพและเอนจิน (Quality & Engine)",
+                lblRatio: "อัตราส่วนภาพ (Aspect Ratio)",
+                lblExtraSectionTitle: "ส่วนเสริมพิเศษ (Pro Studio Controls)",
+                lblTextOverlay: "ข้อความที่ต้องการให้ปรากฏในภาพ (ถ้ามี)",
+                textOverlayPlaceholder: 'เช่น ป้ายไฟนีออนเขียนว่า "AETHER CAFE"',
+                lblDetailLevel: "ระดับความละเอียด (Detail Level)",
+                detailLevels: {
+                    1: "ระดับ 1: กระชับเข้าใจง่าย",
+                    2: "ระดับ 2: มาตรฐานสมดุล",
+                    3: "ระดับ 3: ละเอียดสูงระดับภาพยนตร์"
+                },
+                lblSliderMin: "กระชับ",
+                lblSliderMid: "สมดุล",
+                lblSliderMax: "ละเอียดสูง",
+                lblNegativeTitle: "สิ่งที่ต้องการตัดออก (Negative Prompt)",
+                customNegativePlaceholder: "พิมพ์สิ่งที่ไม่ต้องการเพิ่มเติม เช่น ฝนตก, คนเยอะ, สีมืดเกินไป...",
+                lblOutputTitle: "ผลลัพธ์ Prompt พร้อมใช้งาน",
+                magicStatusText: "เพิ่มคำขยายรายละเอียดภาพและบรรยากาศอัตโนมัติแล้ว!",
+                lblChatGPTBox: "สำหรับ ChatGPT (DALL-E 3 / พรรณนาธรรมชาติ)",
+                lblGoogleFlowBox: "สำหรับ Google Flow / Imagen 3 (โครงสร้างคีย์เวิร์ดคมชัด)",
+                copyBtnLabel: "คัดลอก",
+                btnSaveHistoryText: "บันทึกเก็บไว้",
+                btnDownloadTxtText: "ดาวน์โหลด .TXT",
+                lblHistoryTitle: "ประวัติ Prompt ที่บันทึกไว้",
+                btnClearHistory: "ล้างประวัติ",
+                emptyHistoryText: "ยังไม่มีประวัติที่บันทึกไว้ กดปุ่ม 'บันทึกเก็บไว้' เพื่อเก็บ Prompt ที่ชอบ",
+                toastCopied: "คัดลอก Prompt ลงคลิปบอร์ดแล้ว!",
+                toastMagicApplied: "Generate Auto สำเร็จ! ขยายรายละเอียดให้ครบถ้วนแล้ว",
+                toastSaved: "บันทึกเข้าสู่ประวัติเรียบร้อยแล้ว",
+                toastReset: "รีเซ็ตค่าทั้งหมดกลับเป็นค่าเริ่มต้นแล้ว",
+                defaultSubject: "นักเดินทางอวกาศยืนอยู่บนหน้าผาคริสตัลเรืองแสง มองดูเนบิวลาหลากสีและกาแล็กซีในยามค่ำคืน"
+            },
+            en: {
+                appTitle: "AetherLens AI Studio",
+                appSubtitle: "Intelligent AI Image Prompt Generator for ChatGPT & Google Flow",
+                langBadgeText: "English (EN)",
+                langSwitchHint: "⇄ TH",
+                btnResetText: "Reset",
+                lblSubjectTitle: "Main Image Subject or Concept",
+                lblLangSupport: "Supports TH & EN",
+                subjectPlaceholder: "Describe your main subject, e.g., An orange cat in an astronaut suit standing on Mars, orคาเฟ่มินิมอลอบอุ่นในเกียวโต...",
+                lblQuickIdeas: "Quick Starter Ideas (Click to apply):",
+                lblDropdownSectionTitle: "Visual & Camera Settings",
+                btnMagicAutoText: "Generate Auto (Magic Enhance)",
+                lblPlatform: "Target AI Platform",
+                lblStyle: "Art Style",
+                lblCamera: "Camera Angle & Shot",
+                lblLighting: "Lighting Setup",
+                lblColor: "Color Tone & Mood",
+                lblComposition: "Composition & Lens",
+                lblQuality: "Quality & Render Engine",
+                lblRatio: "Aspect Ratio",
+                lblExtraSectionTitle: "Pro Studio Controls",
+                lblTextOverlay: "Text on Image (Optional)",
+                textOverlayPlaceholder: 'e.g., Neon sign reading "AETHER CAFE"',
+                lblDetailLevel: "Prompt Detail Level",
+                detailLevels: {
+                    1: "Level 1: Concise & Clean",
+                    2: "Level 2: Balanced Standard",
+                    3: "Level 3: Ultra-Detailed Cinematic"
+                },
+                lblSliderMin: "Concise",
+                lblSliderMid: "Balanced",
+                lblSliderMax: "Masterpiece",
+                lblNegativeTitle: "Exclude Elements (Negative Prompt)",
+                customNegativePlaceholder: "Add custom exclusions, e.g., rain, crowded people, gloomy...",
+                lblOutputTitle: "Ready-to-Use AI Prompts",
+                magicStatusText: "Magic Auto-Enhancement applied with rich cinematic details!",
+                lblChatGPTBox: "For ChatGPT (DALL-E 3 / Conversational Flow)",
+                lblGoogleFlowBox: "For Google Flow / Imagen 3 (Structured Cinematic Keywords)",
+                copyBtnLabel: "Copy",
+                btnSaveHistoryText: "Save Prompt",
+                btnDownloadTxtText: "Export .TXT",
+                lblHistoryTitle: "Saved Prompt History",
+                btnClearHistory: "Clear All",
+                emptyHistoryText: "No saved prompts yet. Click 'Save Prompt' to bookmark your favorite results.",
+                toastCopied: "Prompt copied to clipboard!",
+                toastMagicApplied: "Generate Auto complete! Added rich visual descriptors.",
+                toastSaved: "Prompt saved to history!",
+                toastReset: "All settings have been reset.",
+                defaultSubject: "A lone futuristic explorer standing on a glowing crystal cliff overlooking a vibrant cosmic nebula"
+            }
+        };
+
+        // Quick Starter Chips Data
+        const quickIdeasData = [
+            {
+                label_th: "☕ คาเฟ่มินิมอลอบอุ่น",
+                label_en: "☕ Cozy Minimalist Cafe",
+                subject_th: "คาเฟ่สไตล์มินิมอลญี่ปุ่นตกแต่งด้วยไม้ธรรมชาติ แสงแดดยามเช้าส่องผ่านหน้าต่างกระจกบานใหญ่ มีถ้วยกาแฟลาเต้อาร์ตวางอยู่บนโต๊ะไม้โอ๊ค",
+                subject_en: "A cozy Japanese minimalist wooden cafe with morning sunlight streaming through large glass windows, a cup of hot latte art on an oak table",
+                preset: { style: "photorealistic", camera: "eye_level", lighting: "window_light", color: "warm_cozy", ratio: "16:9" }
+            },
+            {
+                label_th: "🏙️ เมืองไซเบอร์พังก์อนาคต",
+                label_en: "🏙️ Cyberpunk Night City",
+                subject_th: "ตรอกถนนในเมืองโลกอนาคตยามค่ำคืนหลังฝนตก มีป้ายไฟนีออนโฮโลแกรมสะท้อนบนพื้นน้ำขัง และรถบินได้แล่นผ่านตึกระฟ้า",
+                subject_en: "A futuristic cyberpunk street alley at night after rain, holographic neon signs reflecting on wet pavement with flying cars passing between skyscrapers",
+                preset: { style: "cyberpunk", camera: "low_angle", lighting: "neon_glow", color: "cyber_neon", ratio: "21:9" }
+            },
+            {
+                label_th: "🧊 ห้องทำงาน 3D Isometric",
+                label_en: "🧊 3D Isometric Studio",
+                subject_th: "ห้องทำงานครีเอเตอร์และเกมเมอร์แบบจำลอง 3 มิติในกล่องจิ๋ว มีโต๊ะคอมพิวเตอร์สองจอ ต้นไม้ฟอกอากาศ ชั้นหนังสือ และแมวนอนหลับบนโซฟา",
+                subject_en: "A cute cutaway 3D isometric creator and gamer bedroom diorama with dual-monitor desk setup, indoor plants, bookshelves, and a sleeping cat on a sofa",
+                preset: { style: "isometric_3d", camera: "isometric_view", lighting: "studio_light", color: "pastel_dreamy", ratio: "1:1" }
+            },
+            {
+                label_th: "🍜 อาหารไทยระดับพรีเมียม",
+                label_en: "🍜 Fine Dining Thai Cuisine",
+                subject_th: "ผัดไทยกุ้งแม่น้ำย่างตัวโตจัดจานระดับมิชลินสตาร์บนจานเซรามิกสีดำด้าน มีควันไอร้อนบางๆ เครื่องเคียงสดใหม่และดอกไม้กินได้ประดับสวยงาม",
+                subject_en: "Michelin-star plated Pad Thai with giant grilled river prawns on a matte black ceramic plate, subtle rising steam, fresh herbs and edible flowers",
+                preset: { style: "photorealistic", camera: "closeup_macro", lighting: "chiaroscuro", color: "vibrant_vivid", ratio: "4:3" }
+            },
+            {
+                label_th: "🐉 แฟนตาซีอนิเมะจิบลิ",
+                label_en: "🐉 Ghibli Fantasy Valley",
+                subject_th: "ปราสาทลอยฟ้ากลางหุบเขาดอกไม้สีสันสดใส มีกังหันลมหมุนรับลมและหมู่เมฆสีขาวฟูฟ่องในวันฟ้าใส",
+                subject_en: "A floating castle above a lush valley of colorful wildflowers with spinning windmills and fluffy cumulus clouds under a clear blue sky",
+                preset: { style: "anime_ghibli", camera: "wide_shot", lighting: "golden_hour", color: "vibrant_vivid", ratio: "16:9" }
+            }
+        ];
+
+        // Dropdown Options Database (Bilingual UI + Prompt Output Values)
+        const dropdownOptions = {
+            platform: [
+                { id: "both", ui_th: "แสดงทั้ง ChatGPT และ Google Flow", ui_en: "Show Both (ChatGPT & Google Flow)" },
+                { id: "chatgpt", ui_th: "เน้น ChatGPT (DALL-E 3)", ui_en: "Focus on ChatGPT (DALL-E 3)" },
+                { id: "googleflow", ui_th: "เน้น Google Flow / Imagen 3", ui_en: "Focus on Google Flow / Imagen 3" }
+            ],
+            style: [
+                { id: "photorealistic", ui_th: "ภาพถ่ายสมจริง (Photorealistic Photography)", ui_en: "Photorealistic Photography", prompt_th: "ภาพถ่ายสมจริงความละเอียดสูง รายละเอียดพื้นผิวคมชัดเป็นธรรมชาติ", prompt_en: "ultra-realistic commercial photography, lifelike textures, natural skin and surface details" },
+                { id: "cinematic_film", ui_th: "ภาพยนตร์ฟอร์มยักษ์ (Cinematic Movie Still)", ui_en: "Cinematic Movie Still", prompt_th: "สไตล์ภาพจากภาพยนตร์ฮอลลีวูดฟอร์มยักษ์ มีมิติอารมณ์ลึกซึ้ง", prompt_en: "cinematic blockbuster movie still, anamorphic lens flare, theatrical atmosphere" },
+                { id: "isometric_3d", ui_th: "โมเดล 3D ไอโซเมตริก (3D Isometric Render)", ui_en: "3D Isometric Diorama Render", prompt_th: "งานเรนเดอร์โมเดล 3 มิติแบบไอโซเมตริกสุดน่ารัก พื้นผิวเรียบเนียนสไตล์ดินปั้นดิจิทัล", prompt_en: "3D isometric miniature diorama render, smooth clay and matte plastic shaders, cute stylized details" },
+                { id: "pixar_disney", ui_th: "แอนิเมชัน 3D พิกซาร์ (Pixar / Disney Style)", ui_en: "Pixar / Disney 3D Animation", prompt_th: "สไตล์ภาพแอนิเมชัน 3 มิติแบบสตูดิโอ Pixar และ Disney ตัวละครและฉากมีชีวิตชีวา", prompt_en: "Pixar and Disney 3D animation studio style, expressive features, subsurface scattering, whimsical charm" },
+                { id: "anime_ghibli", ui_th: "อนิเมะญี่ปุ่น / จิบลิ (Anime / Studio Ghibli)", ui_en: "Anime / Studio Ghibli Style", prompt_th: "ภาพวาดอนิเมะญี่ปุ่นสีน้ำผสมดิจิทัลสไตล์ Studio Ghibli ลายเส้นอบอุ่นละมุนตา", prompt_en: "hand-painted Studio Ghibli anime background art style, lush painterly brushwork, nostalgic cel-shaded aesthetic" },
+                { id: "cyberpunk", ui_th: "ไซเบอร์พังก์และไซไฟ (Cyberpunk & Sci-Fi)", ui_en: "Cyberpunk & Futuristic Sci-Fi", prompt_th: "สไตล์ไซเบอร์พังก์โลกอนาคต ไฮเทค ล้ำสมัย เต็มไปด้วยเทคโนโลยีโฮโลแกรม", prompt_en: "high-tech cyberpunk sci-fi concept art, futuristic dystopian architecture, biomechanical and holographic details" },
+                { id: "watercolor_oil", ui_th: "ภาพวาดสีน้ำ/สีน้ำมัน (Fine Art Painting)", ui_en: "Watercolor & Impasto Oil Painting", prompt_th: "งานศิลปะภาพวาดสีน้ำมันผสมสีน้ำบนผืนผ้าใบ เห็นฝีแปรงที่มีเอกลักษณ์ชัดเจน", prompt_en: "expressive impasto oil and delicate watercolor painting on textured canvas, visible artistic brushstrokes" },
+                { id: "minimal_vector", ui_th: "เวกเตอร์มินิมอล (Minimalist Flat Vector)", ui_en: "Minimalist Flat Vector Illustration", prompt_th: "ภาพประกอบเวกเตอร์สไตล์มินิมอล รูปทรงเรขาคณิตสะอาดตา เส้นสายคมชัด", prompt_en: "modern minimalist flat vector illustration, clean geometric shapes, Behance and Dribbble editorial design" }
+            ],
+            camera: [
+                { id: "eye_level", ui_th: "ระดับสายตา (Eye-Level Shot)", ui_en: "Eye-Level Medium Shot", prompt_th: "มุมกล้องระดับสายตาปกติ ให้ความรู้สึกเป็นธรรมชาติและใกล้ชิด", prompt_en: "eye-level medium shot, natural human perspective" },
+                { id: "closeup_macro", ui_th: "โคลสอัพ / มาโครระยะใกล้ (Close-up / Macro)", ui_en: "Extreme Close-up / Macro Shot", prompt_th: "มุมกล้องโคลสอัพระยะใกล้พิเศษ เน้นรายละเอียดพื้นผิวชัดเจนและละลายฉากหลัง", prompt_en: "extreme close-up macro shot, razor-sharp focus on intricate micro-textures, creamy bokeh background" },
+                { id: "wide_shot", ui_th: "มุมกว้างเห็นฉากหลัง (Wide Establishing Shot)", ui_en: "Wide Angle Establishing Shot", prompt_th: "มุมกล้องกว้างพิเศษเผยให้เห็นสภาพแวดล้อมและฉากหลังอย่างยิ่งใหญ่อลังการ", prompt_en: "expansive wide-angle establishing shot showcasing the grand environment and scale" },
+                { id: "low_angle", ui_th: "มุมเสยเพิ่มความยิ่งใหญ่ (Low Angle Hero Shot)", ui_en: "Low Angle Heroic Shot", prompt_th: "มุมกล้องเสยจากด้านล่างขึ้นด้านบน เสริมให้ตัวแบบดูโดดเด่นทรงพลัง", prompt_en: "dramatic low-angle hero shot looking up, emphasizing power and monumental scale" },
+                { id: "birds_eye", ui_th: "มุมสูงโดรน / ตานก (Bird's-Eye / Drone View)", ui_en: "Bird's-Eye / Aerial Drone View", prompt_th: "มุมมองภาพถ่ายทางอากาศจากโดรนมุมสูง เห็นภาพรวมจากด้านบน", prompt_en: "high-altitude aerial drone photography, sweeping bird's-eye view" },
+                { id: "isometric_view", ui_th: "มุมมองเฉียง 45 องศา (Isometric Orthographic)", ui_en: "Isometric Orthographic View", prompt_th: "มุมกล้องเฉียง 45 องศาแบบไอโซเมตริกสมมาตรทุกระนาบ", prompt_en: "true orthographic isometric camera projection at 45-degree angle" },
+                { id: "over_shoulder", ui_th: "มุมมองข้ามไหล่ (Over-the-Shoulder Shot)", ui_en: "Over-the-Shoulder Perspective", prompt_th: "มุมกล้องถ่ายผ่านไหล่พาผู้ชมเข้าสู่เหตุการณ์เหมือนอยู่ในฉากจริง", prompt_en: "immersive over-the-shoulder cinematic framing, storytelling depth" }
+            ],
+            lighting: [
+                { id: "golden_hour", ui_th: "แสงสีทองยามเย็น (Golden Hour Sunlight)", ui_en: "Golden Hour Warm Sunlight", prompt_th: "แสงอาทิตย์สีทองอบอุ่นยามเย็น ทอดเงายาวนุ่มนวลและมีประกายแสง", prompt_en: "warm golden hour sunset lighting, soft long shadows, glowing sun-kissed rim light" },
+                { id: "studio_light", ui_th: "ไฟสตูดิโอระดับมืออาชีพ (Three-Point Studio)", ui_en: "Professional 3-Point Studio Lighting", prompt_th: "การจัดไฟสตูดิโอ 3 จุดระดับมืออาชีพ แสงเคลียร์ใสมีมิติไฮไลท์และเงาสมบูรณ์แบบ", prompt_en: "professional three-point commercial studio lighting, softbox key light, crisp rim light, balanced fill" },
+                { id: "window_light", ui_th: "แสงธรรมชาติผ่านหน้าต่าง (Soft Window Light)", ui_en: "Soft Diffused Window Light", prompt_th: "แสงธรรมชาติอ่อนโยนส่องผ่านม่านหน้าต่าง ให้บรรยากาศสงบสบายตา", prompt_en: "soft diffused natural morning window light, gentle ambient illumination" },
+                { id: "neon_glow", ui_th: "แสงไฟนีออนสะท้อน (Cyberpunk Neon Glow)", ui_en: "Bioluminescent & Neon Glow", prompt_th: "แสงไฟนีออนและแสงเรืองรองหลากสีตัดกับเงามืดอย่างมีมิติ", prompt_en: "vibrant neon lighting with cyan and magenta reflections, glowing volumetric fog" },
+                { id: "chiaroscuro", ui_th: "แสงเงาดราม่า контраสต์สูง (Dramatic Chiaroscuro)", ui_en: "Dramatic Chiaroscuro & Rim Light", prompt_th: "การจัดแสงแบบเคียโรสคูโร เน้นแสงตกกระทบเฉพาะจุดตัดกับฉากหลังมืดลึกทรงพลัง", prompt_en: "dramatic chiaroscuro lighting, high-contrast shadow play, moody silhouette rim lighting" },
+                { id: "god_rays", ui_th: "ลำแสงทะลุเมฆ/หมอก (Volumetric God Rays)", ui_en: "Volumetric Crepuscular God Rays", prompt_th: "ลำแสงศักดิ์สิทธิ์ส่องทะลุม่านหมอกและฝุ่นละอองในอากาศอย่างน่าอัศจรรย์", prompt_en: "ethereal volumetric god rays piercing through atmospheric mist, tyndall effect" }
+            ],
+            color: [
+                { id: "vibrant_vivid", ui_th: "สีสันสดใสคมชัด (Vibrant & Vivid Colors)", ui_en: "Vibrant & Richly Saturated", prompt_th: "โทนสีสดใสอิ่มตัว คอนทราสต์ชัดเจนมีชีวิตชีวา", prompt_en: "vibrant and richly saturated color palette, punchy dynamic range" },
+                { id: "warm_cozy", ui_th: "โทนอุ่นละมุน (Warm & Cozy Earth Tones)", ui_en: "Warm Cozy Amber & Earth Tones", prompt_th: "โทนสีอบอุ่นละมุนตาด้วยสีน้ำตาลไม้ สีครีม และสีทองอำพัน", prompt_en: "warm and cozy color grading with amber, honey, cream, and natural wood tones" },
+                { id: "pastel_dreamy", ui_th: "โทนพาสเทลชวนฝัน (Soft Pastel & Dreamy)", ui_en: "Soft Pastel & Dreamy Aesthetic", prompt_th: "โทนสีพาสเทลอ่อนหวานนุ่มนวล ชวนฝันและผ่อนคลาย", prompt_en: "soft pastel color palette, dreamy cotton-candy hues, gentle low-contrast grading" },
+                { id: "teal_orange", ui_th: "โทนภาพยนตร์ (Cinematic Teal & Orange)", ui_en: "Cinematic Teal & Orange Grading", prompt_th: "การเกรดสีสไตล์ภาพยนตร์ด้วยคู่สีฟ้าอมเขียวตัดกับสีส้มทอง", prompt_en: "Hollywood cinematic teal and orange color grading, rich tonal separation" },
+                { id: "cyber_neon", ui_th: "โทนนีออนชมพู-ฟ้า (Cyberpunk Pink & Cyan)", ui_en: "Electric Neon Magenta & Cyan", prompt_th: "โทนสีนีออนชมพูมาเจนต้าตัดกับสีฟ้าไซแอนและสีม่วงเข้ม", prompt_en: "electric cyberpunk neon magenta, ultraviolet, and laser cyan color scheme" },
+                { id: "monochrome", ui_th: "ขาว-ดำ คลาสสิก (Fine Art Black & White)", ui_en: "Classic Monochrome Black & White", prompt_th: "ภาพขาว-ดำคลาสสิกไล่เฉดสีเทาและคอนทราสต์อย่างประณีต", prompt_en: "timeless fine-art monochrome black and white photography, rich silver-gelatin contrast" }
+            ],
+            composition: [
+                { id: "rule_of_thirds", ui_th: "กฎสามส่วน + เลนส์ 85mm หน้าชัดหลังละลาย", ui_en: "Rule of Thirds + 85mm f/1.4 Bokeh", prompt_th: "จัดองค์ประกอบตามกฎสามส่วน ถ่ายด้วยเลนส์ 85mm f/1.4 หน้าชัดหลังเบลอสวยงาม", prompt_en: "rule of thirds composition, shot on 85mm f/1.4 prime lens, shallow depth of field with smooth bokeh" },
+                { id: "centered_sym", ui_th: "สมมาตรกึ่งกลางภาพ + เลนส์ 35mm", ui_en: "Centered Symmetry + 35mm Lens", prompt_th: "จัดองค์ประกอบสมมาตรกึ่งกลางภาพอย่างสมบูรณ์แบบ ถ่ายด้วยเลนส์ 35mm", prompt_en: "Wes Anderson style dead-center symmetrical composition, shot on 35mm f/1.8 lens" },
+                { id: "leading_lines", ui_th: "เส้นนำสายตา + เลนส์มุมกว้าง 24mm", ui_en: "Leading Lines + 24mm Wide Lens", prompt_th: "ใช้เส้นนำสายตาดึงดูดเข้าสู่จุดสนใจหลัก ถ่ายด้วยเลนส์มุมกว้าง 24mm", prompt_en: "strong architectural leading lines drawing the eye to the subject, 24mm wide-angle lens" },
+                { id: "golden_ratio", ui_th: "สัดส่วนทองคำ + เลนส์มาโคร 100mm", ui_en: "Golden Ratio + 100mm Macro Lens", prompt_th: "จัดวางตามสัดส่วนทองคำ (Golden Ratio) พร้อมเลนส์ 100mm เก็บรายละเอียดครบถ้วน", prompt_en: "harmonious golden ratio spiral composition, 100mm f/2.8 macro lens precision" },
+                { id: "flat_lay", ui_th: "จัดวางถ่ายจากมุมท็อป (Top-Down Flat Lay)", ui_en: "Top-Down Flat Lay Arrangement", prompt_th: "การจัดวางองค์ประกอบแบบ Flat Lay ถ่ายตรงจากด้านบน 90 องศาอย่างเป็นระเบียบ", prompt_en: "curated top-down 90-degree flat lay arrangement, balanced spacing" }
+            ],
+            quality: [
+                { id: "8k_octane", ui_th: "8K UHD คมชัดสูงสุด + Octane Render", ui_en: "8K UHD Photorealistic + Octane Render", prompt_th: "ความละเอียดสูงระดับ 8K UHD เรนเดอร์ด้วย Octane Render เก็บรายละเอียดแสงและพื้นผิวสมจริงที่สุด", prompt_en: "8K UHD resolution, Octane Render, ray-traced reflections, hyper-detailed textures" },
+                { id: "ue5_raytracing", ui_th: "Unreal Engine 5 + Lumen Ray Tracing", ui_en: "Unreal Engine 5 + Lumen Global Illumination", prompt_th: "ขับเคลื่อนด้วย Unreal Engine 5 พร้อมเทคโนโลยี Lumen Global Illumination และ Ray Tracing", prompt_en: "Unreal Engine 5 render, Lumen global illumination, hardware ray tracing, Nanite geometry" },
+                { id: "hasselblad_raw", ui_th: "กล้องโปร Hasselblad + ภาพถ่าย RAW", ui_en: "Hasselblad Medium Format RAW Photo", prompt_th: "ถ่ายด้วยกล้องมีเดียมฟอร์แมต Hasselblad H6D-100c ไฟล์ RAW คมชัดระดับแมกกาซีน", prompt_en: "shot on Hasselblad H6D-100c medium format camera, uncompressed RAW photo, award-winning editorial quality" },
+                { id: "imax_70mm", ui_th: "ฟิล์มภาพยนตร์ IMAX 70mm", ui_en: "IMAX 70mm Kodak Film Stock", prompt_th: "ถ่ายทำด้วยกล้องภาพยนตร์ IMAX 70mm บนฟิล์ม Kodak Vision3 เกรนฟิล์มสวยคลาสสิก", prompt_en: "shot on IMAX 70mm camera, Kodak Vision3 500T film stock, subtle organic film grain" }
+            ],
+            ratio: [
+                { id: "1:1", ui_th: "1:1 จัตุรัส (โพสต์ Facebook / IG)", ui_en: "1:1 Square (Social Post)", desc_th: "อัตราส่วนภาพจัตุรัส 1:1 (1024x1024)", desc_en: "square 1:1 aspect ratio" },
+                { id: "16:9", ui_th: "16:9 แนวนอนไวด์สกรีน (YouTube / พรีเซนต์)", ui_en: "16:9 Widescreen (YouTube / Presentation)", desc_th: "อัตราส่วนภาพแนวนอนไวด์สกรีน 16:9 (1792x1024)", desc_en: "widescreen horizontal 16:9 aspect ratio" },
+                { id: "9:16", ui_th: "9:16 แนวตั้งเต็มจอ (TikTok / Reels / Shorts)", ui_en: "9:16 Vertical (TikTok / Reels / Shorts)", desc_th: "อัตราส่วนภาพแนวตั้ง 9:16 (1024x1792)", desc_en: "vertical portrait 9:16 aspect ratio" },
+                { id: "4:3", ui_th: "4:3 มาตรฐานภาพถ่าย (Standard Photo)", ui_en: "4:3 Classic Standard", desc_th: "อัตราส่วนภาพมาตรฐาน 4:3", desc_en: "classic 4:3 aspect ratio" },
+                { id: "3:4", ui_th: "3:4 แนวตั้งพอร์ตเทรต (Portrait Print)", ui_en: "3:4 Vertical Portrait", desc_th: "อัตราส่วนภาพแนวตั้งพอร์ตเทรต 3:4", desc_en: "vertical 3:4 portrait aspect ratio" },
+                { id: "21:9", ui_th: "21:9 อัลตร้าไวด์ภาพยนตร์ (Ultrawide Cinema)", ui_en: "21:9 Ultrawide Anamorphic Cinema", desc_th: "อัตราส่วนภาพจอกว้างพิเศษระดับภาพยนตร์ 21:9", desc_en: "ultrawide 21:9 anamorphic widescreen aspect ratio" }
+            ]
+        };
+
+        // Negative Prompt Preset Checkboxes
+        const negativePresets = [
+            { id: "neg_blur", label_th: "ภาพเบลอ/แตก", label_en: "Blurry / Low-res", val_th: "ภาพเบลอ, ความละเอียดต่ำ, ภาพแตก", val_en: "blurry, out of focus, low resolution, pixelated, jpeg artifacts" },
+            { id: "neg_hands", label_th: "มือ/นิ้วเบี้ยว", label_en: "Bad Hands / Anatomy", val_th: "มือเบี้ยว, นิ้วเกิน, สัดส่วนร่างกายผิดเพี้ยน", val_en: "mutated hands, extra fingers, deformed anatomy, bad proportions" },
+            { id: "neg_text", label_th: "ลายน้ำ/ตัวอักษรเพี้ยน", label_en: "Watermark / Gibberish Text", val_th: "ลายน้ำ, โลโก้แปลกปลอม, ตัวอักษรอ่านไม่ออก", val_en: "watermark, signature, ugly gibberish text, username" },
+            { id: "neg_crop", label_th: "ภาพถูกตัดขอบ", label_en: "Cropped / Out of Frame", val_th: "องค์ประกอบถูกตัดขอบ, ตกเฟรม", val_en: "poorly cropped, out of frame, cut off head" }
+        ];
+
+        // Magic Auto Enhancement Descriptor Pools
+        const magicBoosters = {
+            th: [
+                "บรรยากาศเต็มไปด้วยความมีชีวิตชีวา มีละอองแสงละเอียดลอยในอากาศ พื้นผิววัสดุสะท้อนแสงอย่างสมจริง",
+                "จัดวางเลเยอร์ฉากหน้า ฉากกลาง และฉากหลังอย่างมีมิติลึกซึ้ง รายละเอียดคมกริบทุกตารางนิ้ว",
+                "แสงและเงาสอดประสานกันอย่างลงตัว ให้ความรู้สึกเหมือนผลงานศิลปะชิ้นเอกที่ได้รับรางวัลระดับโลก",
+                "เก็บรายละเอียดไมโครเท็กซ์เจอร์ได้อย่างน่าทึ่ง ทั้งรอยสะท้อนบนพื้นผิวและมิติของบรรยากาศรอบข้าง"
+            ],
+            en: [
+                "intricate micro-textures, atmospheric depth with subtle floating light particles, physically based rendering materials",
+                "masterfully layered foreground, midground, and background elements creating extraordinary spatial depth",
+                "museum-grade visual storytelling, breathtaking realism, harmonious balance of highlights and deep shadows",
+                "ultra-crisp edge definition, lifelike surface reflections, award-winning visual artistry"
+            ]
+        };
+
+        // Application State
+        let uiLang = 'th';           // Controls UI menus & labels ('th' | 'en')
+        let promptLang = 'th';       // Controls generated prompt language ('th' | 'en')
+        let activeNegatives = new Set(['neg_blur', 'neg_hands', 'neg_text']);
+        let magicActive = false;
+        let currentMagicIndex = 0;
+
+        // Initialize App on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderDropdowns();
+            renderQuickChips();
+            renderNegativeCheckboxes();
+            updateUILanguage();
+            loadHistory();
+
+            // Set initial default subject so user immediately sees a rich output
+            document.getElementById('subjectInput').value = i18n[uiLang].defaultSubject;
+            buildPrompts();
+        });
+
+        // Render 8 Dropdowns
+        function renderDropdowns() {
+            const mapping = [
+                { elId: 'ddPlatform', key: 'platform' },
+                { elId: 'ddStyle', key: 'style' },
+                { elId: 'ddCamera', key: 'camera' },
+                { elId: 'ddLighting', key: 'lighting' },
+                { elId: 'ddColor', key: 'color' },
+                { elId: 'ddComposition', key: 'composition' },
+                { elId: 'ddQuality', key: 'quality' },
+                { elId: 'ddRatio', key: 'ratio' }
+            ];
+
+            mapping.forEach(({ elId, key }) => {
+                const selectEl = document.getElementById(elId);
+                const currentVal = selectEl.value;
+                selectEl.innerHTML = '';
+
+                dropdownOptions[key].forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = uiLang === 'th' ? item.ui_th : item.ui_en;
+                    selectEl.appendChild(opt);
+                });
+
+                if (currentVal && Array.from(selectEl.options).some(o => o.value === currentVal)) {
+                    selectEl.value = currentVal;
+                } else if (key === 'ratio') {
+                    selectEl.value = '16:9';
+                }
+            });
+        }
+
+        // Render Quick Idea Starter Chips
+        function renderQuickChips() {
+            const container = document.getElementById('quickChipsContainer');
+            container.innerHTML = '';
+            quickIdeasData.forEach((idea, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'text-xs px-3 py-1.5 rounded-full bg-slate-800/90 hover:bg-indigo-600/30 border border-slate-600/70 hover:border-indigo-400 text-slate-200 transition';
+                btn.textContent = uiLang === 'th' ? idea.label_th : idea.label_en;
+                btn.onclick = () => applyQuickIdea(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        // Apply Quick Idea Preset
+        function applyQuickIdea(index) {
+            const idea = quickIdeasData[index];
+            const subjectEl = document.getElementById('subjectInput');
+            subjectEl.value = promptLang === 'th' ? idea.subject_th : idea.subject_en;
+
+            if (idea.preset.style) document.getElementById('ddStyle').value = idea.preset.style;
+            if (idea.preset.camera) document.getElementById('ddCamera').value = idea.preset.camera;
+            if (idea.preset.lighting) document.getElementById('ddLighting').value = idea.preset.lighting;
+            if (idea.preset.color) document.getElementById('ddColor').value = idea.preset.color;
+            if (idea.preset.ratio) document.getElementById('ddRatio').value = idea.preset.ratio;
+
+            buildPrompts();
+        }
+
+        // Render Negative Prompt Checkboxes
+        function renderNegativeCheckboxes() {
+            const container = document.getElementById('negativeCheckboxes');
+            container.innerHTML = '';
+
+            negativePresets.forEach(item => {
+                const isChecked = activeNegatives.has(item.id);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => {
+                    if (activeNegatives.has(item.id)) {
+                        activeNegatives.delete(item.id);
+                    } else {
+                        activeNegatives.add(item.id);
+                    }
+                    renderNegativeCheckboxes();
+                    buildPrompts();
+                };
+
+                btn.className = isChecked
+                    ? 'text-xs px-3 py-1.5 rounded-xl bg-rose-500/25 border border-rose-500/60 text-rose-200 font-medium flex items-center gap-1.5 transition'
+                    : 'text-xs px-3 py-1.5 rounded-xl bg-slate-800/70 border border-slate-700 text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition';
+
+                btn.innerHTML = `<i class="fa-solid ${isChecked ? 'fa-square-check text-rose-400' : 'fa-square text-slate-600'}"></i><span>${uiLang === 'th' ? item.label_th : item.label_en}</span>`;
+                container.appendChild(btn);
+            });
+        }
+
+        // Update Detail Slider Label
+        function updateDetailBadge() {
+            const val = document.getElementById('detailSlider').value;
+            document.getElementById('detailLevelBadge').textContent = i18n[uiLang].detailLevels[val];
+        }
+
+        // Toggle Entire Language (Both UI & Prompt Output)
+        function toggleLanguage() {
+            const prevLang = uiLang;
+            uiLang = uiLang === 'th' ? 'en' : 'th';
+            promptLang = uiLang;
+
+            // Translate default or quick-chip subject if it matches a known preset
+            const subjInput = document.getElementById('subjectInput');
+            const currentSubj = subjInput.value.trim();
+            if (currentSubj === i18n[prevLang].defaultSubject) {
+                subjInput.value = i18n[uiLang].defaultSubject;
+            } else {
+                quickIdeasData.forEach(idea => {
+                    if (currentSubj === idea.subject_th || currentSubj === idea.subject_en) {
+                        subjInput.value = uiLang === 'th' ? idea.subject_th : idea.subject_en;
+                    }
+                });
+            }
+
+            updateUILanguage();
+            renderDropdowns();
+            renderQuickChips();
+            renderNegativeCheckboxes();
+            loadHistory();
+            buildPrompts();
+        }
+
+        // Switch Only Prompt Output Language (Quick Toggle inside Output Card)
+        function setPromptLanguage(lang) {
+            promptLang = lang;
+            updateOutputLangButtons();
+            buildPrompts();
+        }
+
+        function updateOutputLangButtons() {
+            const btnTH = document.getElementById('btnOutLangTH');
+            const btnEN = document.getElementById('btnOutLangEN');
+
+            if (promptLang === 'th') {
+                btnTH.className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow transition';
+                btnEN.className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition';
+            } else {
+                btnEN.className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow transition';
+                btnTH.className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition';
+            }
+        }
+
+        // Update all static UI texts based on uiLang
+        function updateUILanguage() {
+            const t = i18n[uiLang];
+            document.getElementById('appTitle').textContent = t.appTitle;
+            document.getElementById('appSubtitle').textContent = t.appSubtitle;
+            document.getElementById('langBadgeText').textContent = t.langBadgeText;
+            document.getElementById('langSwitchHint').textContent = t.langSwitchHint;
+            document.getElementById('btnResetText').textContent = t.btnResetText;
+            document.getElementById('lblSubjectTitle').textContent = t.lblSubjectTitle;
+            document.getElementById('lblLangSupport').innerHTML = `<i class="fa-solid fa-check-circle"></i> ${t.lblLangSupport}`;
+            document.getElementById('subjectInput').placeholder = t.subjectPlaceholder;
+            document.getElementById('lblQuickIdeas').textContent = t.lblQuickIdeas;
+            document.getElementById('lblDropdownSectionTitle').textContent = t.lblDropdownSectionTitle;
+            document.getElementById('btnMagicAutoText').textContent = t.btnMagicAutoText;
+
+            document.getElementById('lblPlatform').textContent = t.lblPlatform;
+            document.getElementById('lblStyle').textContent = t.lblStyle;
+            document.getElementById('lblCamera').textContent = t.lblCamera;
+            document.getElementById('lblLighting').textContent = t.lblLighting;
+            document.getElementById('lblColor').textContent = t.lblColor;
+            document.getElementById('lblComposition').textContent = t.lblComposition;
+            document.getElementById('lblQuality').textContent = t.lblQuality;
+            document.getElementById('lblRatio').textContent = t.lblRatio;
+
+            document.getElementById('lblExtraSectionTitle').textContent = t.lblExtraSectionTitle;
+            document.getElementById('lblTextOverlay').textContent = t.lblTextOverlay;
+            document.getElementById('textOverlayInput').placeholder = t.textOverlayPlaceholder;
+            document.getElementById('lblDetailLevel').textContent = t.lblDetailLevel;
+            document.getElementById('lblSliderMin').textContent = t.lblSliderMin;
+            document.getElementById('lblSliderMid').textContent = t.lblSliderMid;
+            document.getElementById('lblSliderMax').textContent = t.lblSliderMax;
+            document.getElementById('lblNegativeTitle').textContent = t.lblNegativeTitle;
+            document.getElementById('customNegativeInput').placeholder = t.customNegativePlaceholder;
+
+            document.getElementById('lblOutputTitle').textContent = t.lblOutputTitle;
+            document.getElementById('magicStatusText').textContent = t.magicStatusText;
+            document.getElementById('lblChatGPTBox').textContent = t.lblChatGPTBox;
+            document.getElementById('lblGoogleFlowBox').textContent = t.lblGoogleFlowBox;
+            document.getElementById('btnSaveHistoryText').textContent = t.btnSaveHistoryText;
+            document.getElementById('btnDownloadTxtText').textContent = t.btnDownloadTxtText;
+            document.getElementById('lblHistoryTitle').textContent = t.lblHistoryTitle;
+            document.getElementById('btnClearHistory').textContent = t.btnClearHistory;
+
+            document.querySelectorAll('.copy-btn-label').forEach(el => {
+                el.textContent = t.copyBtnLabel;
+            });
+
+            updateDetailBadge();
+            updateOutputLangButtons();
+        }
+
+        // Helper to look up selected option object
+        function getSelectedOption(category, value) {
+            return dropdownOptions[category].find(item => item.id === value) || dropdownOptions[category][0];
+        }
+
+        // Core Function: Build Prompts for ChatGPT & Google Flow
+        function buildPrompts() {
+            const rawSubject = document.getElementById('subjectInput').value.trim();
+            const subject = rawSubject || (promptLang === 'th' ? i18n.th.defaultSubject : i18n.en.defaultSubject);
+
+            const platform = document.getElementById('ddPlatform').value;
+            const styleObj = getSelectedOption('style', document.getElementById('ddStyle').value);
+            const cameraObj = getSelectedOption('camera', document.getElementById('ddCamera').value);
+            const lightingObj = getSelectedOption('lighting', document.getElementById('ddLighting').value);
+            const colorObj = getSelectedOption('color', document.getElementById('ddColor').value);
+            const compObj = getSelectedOption('composition', document.getElementById('ddComposition').value);
+            const qualityObj = getSelectedOption('quality', document.getElementById('ddQuality').value);
+            const ratioObj = getSelectedOption('ratio', document.getElementById('ddRatio').value);
+
+            const textOverlay = document.getElementById('textOverlayInput').value.trim();
+            const detailLevel = parseInt(document.getElementById('detailSlider').value, 10);
+            const customNeg = document.getElementById('customNegativeInput').value.trim();
+
+            // Show/Hide platform cards based on Target Platform selection
+            document.getElementById('chatgptCard').style.display = (platform === 'both' || platform === 'chatgpt') ? 'block' : 'none';
+            document.getElementById('googleFlowCard').style.display = (platform === 'both' || platform === 'googleflow') ? 'block' : 'none';
+
+            // Collect negative prompts
+            const negList = [];
+            negativePresets.forEach(n => {
+                if (activeNegatives.has(n.id)) {
+                    negList.push(promptLang === 'th' ? n.val_th : n.val_en);
+                }
+            });
+            if (customNeg) negList.push(customNeg);
+            const negativeStr = negList.join(', ');
+
+            // Magic booster text
+            const magicText = magicActive ? magicBoosters[promptLang][currentMagicIndex % magicBoosters[promptLang].length] : '';
+
+            let chatgptFinal = '';
+            let googleFlowFinal = '';
+
+            if (promptLang === 'th') {
+                // --- THAI PROMPT GENERATION ---
+                let textPart = textOverlay ? ` โดยมีข้อความในภาพที่สะกดอย่างชัดเจนและถูกต้องว่า "${textOverlay}" จัดวางอย่างกลมกลืน` : '';
+                let detailPart = '';
+                if (detailLevel === 2) {
+                    detailPart = ` องค์ประกอบภาพใช้${compObj.prompt_th}`;
+                } else if (detailLevel === 3) {
+                    detailPart = ` องค์ประกอบภาพใช้${compObj.prompt_th} คุณภาพระดับ ${qualityObj.prompt_th}`;
+                }
+                let magicPart = magicActive ? ` พิเศษ: ${magicText}` : '';
+                let negPart = negativeStr ? `\n[สิ่งที่ต้องหลีกเลี่ยงในภาพ: ${negativeStr}]` : '';
+
+                chatgptFinal = `ช่วยสร้างรูปภาพใน${styleObj.prompt_th} โดยมีรายละเอียดหลักคือ: ${subject}${textPart} กำหนดเป็น${cameraObj.prompt_th} บรรยากาศใช้${lightingObj.prompt_th} ผสานกับ${colorObj.prompt_th}${detailPart}${magicPart} กำหนด${ratioObj.desc_th}${negPart}`;
+
+                // Google Flow / Imagen structured Thai format
+                const flowParts = [
+                    `[แนวคิดหลัก]: ${subject}`,
+                    textOverlay ? `[ข้อความบนภาพ]: "${textOverlay}"` : null,
+                    `[สไตล์]: ${styleObj.prompt_th}`,
+                    `[มุมกล้องและเลนส์]: ${cameraObj.prompt_th}${detailLevel >= 2 ? ', ' + compObj.prompt_th : ''}`,
+                    `[แสงและโทนสี]: ${lightingObj.prompt_th}, ${colorObj.prompt_th}`,
+                    detailLevel === 3 ? `[คุณภาพการเรนเดอร์]: ${qualityObj.prompt_th}` : null,
+                    magicActive ? `[รายละเอียดเสริม]: ${magicText}` : null,
+                    `[อัตราส่วนภาพ]: ${ratioObj.id} (${ratioObj.desc_th})`,
+                    negativeStr ? `[Negative Prompt / ไม่ต้องการ]: ${negativeStr}` : null
+                ].filter(Boolean);
+
+                googleFlowFinal = flowParts.join(' | ');
+
+            } else {
+                // --- ENGLISH PROMPT GENERATION ---
+                let textPart = textOverlay ? ` Prominently feature clear, legible typography in the scene that reads "${textOverlay}".` : '';
+                let detailPart = '';
+                if (detailLevel === 2) {
+                    detailPart = ` Framed with ${compObj.prompt_en}.`;
+                } else if (detailLevel === 3) {
+                    detailPart = ` Framed with ${compObj.prompt_en}, rendered in ${qualityObj.prompt_en}.`;
+                }
+                let magicPart = magicActive ? ` ${magicText}.` : '';
+                let negPart = negativeStr ? `\n\nAvoid: ${negativeStr}.` : '';
+
+                chatgptFinal = `Create an image in the style of ${styleObj.prompt_en}. Main subject: ${subject}.${textPart} Capture this from an ${cameraObj.prompt_en}, illuminated by ${lightingObj.prompt_en} with a ${colorObj.prompt_en}.${detailPart}${magicPart} Please generate the image in ${ratioObj.desc_en} (${ratioObj.id}).${negPart}`;
+
+                // Google Flow / Imagen 3 structured comma-separated descriptors
+                const flowTags = [
+                    subject,
+                    textOverlay ? `clear text reading "${textOverlay}"` : null,
+                    styleObj.prompt_en,
+                    cameraObj.prompt_en,
+                    lightingObj.prompt_en,
+                    colorObj.prompt_en,
+                    detailLevel >= 2 ? compObj.prompt_en : null,
+                    detailLevel === 3 ? qualityObj.prompt_en : null,
+                    magicActive ? magicText : null,
+                    `aspect ratio ${ratioObj.id}`
+                ].filter(Boolean);
+
+                googleFlowFinal = flowTags.join(', ') + (negativeStr ? ` --no ${negativeStr}` : '');
+            }
+
+            document.getElementById('chatgptOutput').value = chatgptFinal;
+            document.getElementById('googleFlowOutput').value = googleFlowFinal;
+        }
+
+        // "Generate Auto" Magic Enhance Button
+        function generateAutoMagic() {
+            const subjInput = document.getElementById('subjectInput');
+            if (!subjInput.value.trim()) {
+                // Pick a random starter idea if empty
+                const randomIdea = quickIdeasData[Math.floor(Math.random() * quickIdeasData.length)];
+                subjInput.value = promptLang === 'th' ? randomIdea.subject_th : randomIdea.subject_en;
+            }
+
+            // Set detail slider to maximum (Level 3)
+            document.getElementById('detailSlider').value = 3;
+            updateDetailBadge();
+
+            // Cycle magic booster & activate banner
+            magicActive = true;
+            currentMagicIndex = (currentMagicIndex + 1) % magicBoosters.th.length;
+            document.getElementById('magicStatusBox').classList.remove('hidden');
+
+            buildPrompts();
+
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: i18n[uiLang].toastMagicApplied,
+                showConfirmButton: false,
+                timer: 2200,
+                background: '#1e293b',
+                color: '#f8fafc'
+            });
+        }
+
+        function clearMagicEnhancement() {
+            magicActive = false;
+            document.getElementById('magicStatusBox').classList.add('hidden');
+            buildPrompts();
+        }
+
+        // Copy Prompt to Clipboard (Compatible with iframe environments)
+        function copyPrompt(elementId) {
+            const textarea = document.getElementById(elementId);
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: i18n[uiLang].toastCopied,
+                showConfirmButton: false,
+                timer: 1800,
+                background: '#1e293b',
+                color: '#f8fafc'
+            });
+        }
+
+        // Save Prompt to LocalStorage History
+        function saveCurrentToHistory() {
+            const subject = document.getElementById('subjectInput').value.trim() || i18n[uiLang].defaultSubject;
+            const chatgptPrompt = document.getElementById('chatgptOutput').value;
+            const googleFlowPrompt = document.getElementById('googleFlowOutput').value;
+
+            const history = JSON.parse(localStorage.getItem('aetherlens_history') || '[]');
+            const newItem = {
+                id: Date.now(),
+                title: subject.slice(0, 60) + (subject.length > 60 ? '...' : ''),
+                chatgpt: chatgptPrompt,
+                googleFlow: googleFlowPrompt,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            history.unshift(newItem);
+            localStorage.setItem('aetherlens_history', JSON.stringify(history.slice(0, 10)));
+            loadHistory();
+
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: i18n[uiLang].toastSaved,
+                showConfirmButton: false,
+                timer: 1800,
+                background: '#1e293b',
+                color: '#f8fafc'
+            });
+        }
+
+        // Render Saved History List
+        function loadHistory() {
+            const listEl = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('aetherlens_history') || '[]');
+
+            if (history.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">${i18n[uiLang].emptyHistoryText}</p>`;
+                return;
+            }
+
+            listEl.innerHTML = '';
+            history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500/40 transition flex items-center justify-between gap-2';
+                div.innerHTML = `
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-slate-200 truncate">${escapeHtml(item.title)}</p>
+                        <span class="text-[11px] text-slate-500">${item.time}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button onclick="restoreHistoryItem(${item.id})" class="px-2.5 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs transition" title="Load">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+
+        function restoreHistoryItem(id) {
+            const history = JSON.parse(localStorage.getItem('aetherlens_history') || '[]');
+            const found = history.find(h => h.id === id);
+            if (found) {
+                document.getElementById('chatgptOutput').value = found.chatgpt;
+                document.getElementById('googleFlowOutput').value = found.googleFlow;
+            }
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('aetherlens_history');
+            loadHistory();
+        }
+
+        // Export Prompts as .TXT File
+        function downloadPromptTxt() {
+            const chatgptPrompt = document.getElementById('chatgptOutput').value;
+            const googleFlowPrompt = document.getElementById('googleFlowOutput').value;
+            const content = `=== ${i18n[uiLang].appTitle} ===\n\n[ChatGPT / DALL-E 3 Prompt]\n${chatgptPrompt}\n\n----------------------------------------\n\n[Google Flow / Imagen 3 Prompt]\n${googleFlowPrompt}\n`;
+
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `AI-Prompt-${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Reset All Form Inputs
+        function resetForm() {
+            document.getElementById('subjectInput').value = '';
+            document.getElementById('textOverlayInput').value = '';
+            document.getElementById('customNegativeInput').value = '';
+            document.getElementById('detailSlider').value = 2;
+            magicActive = false;
+            document.getElementById('magicStatusBox').classList.add('hidden');
+            activeNegatives = new Set(['neg_blur', 'neg_hands', 'neg_text']);
+            renderDropdowns();
+            renderNegativeCheckboxes();
+            updateDetailBadge();
+            buildPrompts();
+
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: i18n[uiLang].toastReset,
+                showConfirmButton: false,
+                timer: 1800,
+                background: '#1e293b',
+                color: '#f8fafc'
+            });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, m => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[m]));
+        }
+    </script>
+</body>
+</html>
